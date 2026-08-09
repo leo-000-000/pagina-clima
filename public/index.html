@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClimaBA — Buenos Aires en tiempo real</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ── NAVBAR ── -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <span class="logo-icon">◈</span>
+        <span>ClimaBA</span>
+      </a>
+      <div class="nav-right">
+        <span class="nav-location">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Buenos Aires
+        </span>
+        <a href="/login.html" class="nav-admin-link">Panel admin →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero" id="hero">
+    <div class="hero-bg-layer"></div>
+    <div class="hero-content">
+      <p class="hero-eyebrow" id="hero-date">Cargando...</p>
+      <div class="hero-temp-block">
+        <div class="hero-temp" id="hero-temp">—</div>
+        <div class="hero-meta">
+          <div class="hero-condition" id="hero-condition">—</div>
+          <div class="hero-feels" id="hero-feels">Sensación térmica: —</div>
+        </div>
+      </div>
+      <h1 class="hero-title" id="hero-title">Cargando pronóstico...</h1>
+      <p class="hero-desc" id="hero-desc"></p>
+
+      <div class="hero-stats">
+        <div class="stat-chip">
+          <span class="stat-icon">💧</span>
+          <span class="stat-label">Humedad</span>
+          <span class="stat-val" id="stat-humidity">—</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-icon">💨</span>
+          <span class="stat-label">Viento</span>
+          <span class="stat-val" id="stat-wind">—</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-icon">☔</span>
+          <span class="stat-label">Precip.</span>
+          <span class="stat-val" id="stat-precip">—</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-icon">🌡️</span>
+          <span class="stat-label">Presión</span>
+          <span class="stat-val" id="stat-pressure">—</span>
+        </div>
+      </div>
+
+      <div class="hero-scroll-hint">
+        <span>Explorar pronósticos</span>
+        <div class="scroll-arrow">↓</div>
+      </div>
+    </div>
+
+    <div class="hero-image-side" id="hero-image-side">
+      <div class="hero-img-wrap">
+        <img id="hero-img" src="https://images.unsplash.com/photo-1504608524841-42584120d693?w=900&q=90" alt="Clima actual">
+        <div class="hero-img-overlay"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DETALLES EXTENDIDOS ── -->
+  <section class="details-strip reveal">
+    <div class="container">
+      <div class="details-grid">
+        <div class="detail-item">
+          <span class="di-icon">🌅</span>
+          <span class="di-label">UV</span>
+          <span class="di-val" id="detail-uv">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="di-icon">👁️</span>
+          <span class="di-label">Visibilidad</span>
+          <span class="di-val" id="detail-vis">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="di-icon">⬇️</span>
+          <span class="di-label">Mínima</span>
+          <span class="di-val" id="detail-min">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="di-icon">⬆️</span>
+          <span class="di-label">Máxima</span>
+          <span class="di-val" id="detail-max">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="di-icon">🧭</span>
+          <span class="di-label">Dirección viento</span>
+          <span class="di-val" id="detail-wind-dir">—</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PRÓXIMOS DÍAS ── -->
+  <section class="forecast-section reveal">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Próximos días</h2>
+        <p class="section-sub">Pronóstico extendido para Buenos Aires</p>
+      </div>
+      <div class="forecast-grid" id="forecast-grid">
+        <!-- Cards inyectadas por JS -->
+        <div class="forecast-skeleton"></div>
+        <div class="forecast-skeleton"></div>
+        <div class="forecast-skeleton"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── GRÁFICOS HISTÓRICOS ── -->
+  <section class="charts-section reveal">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Histórico — 30 días</h2>
+        <p class="section-sub">Temperatura y precipitaciones recientes</p>
+      </div>
+      <div class="charts-tabs">
+        <button class="chart-tab active" data-chart="temp">Temperatura</button>
+        <button class="chart-tab" data-chart="humidity">Humedad</button>
+        <button class="chart-tab" data-chart="precip">Precipitaciones</button>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="mainChart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── NOTAS ADICIONALES ── -->
+  <section class="notes-section reveal" id="notes-section" style="display:none">
+    <div class="container">
+      <div class="notes-card">
+        <span class="notes-tag">Nota meteorológica</span>
+        <p class="notes-text" id="notes-text"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <span class="logo-icon">◈</span> ClimaBA
+          </div>
+          <p>Información meteorológica actualizada para Buenos Aires. Datos cargados por nuestro equipo.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Información</h4>
+          <ul>
+            <li><a href="#">Pronóstico actual</a></li>
+            <li><a href="#">Histórico de datos</a></li>
+            <li><a href="#">Alertas</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Sistema</h4>
+          <ul>
+            <li><a href="/login.html">Acceso administradores</a></li>
+            <li><a href="/api/weather/current" target="_blank">API pública</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2024 ClimaBA — Buenos Aires, Argentina</p>
+        <p>Actualizado continuamente por nuestro equipo meteorológico</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/charts.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+PORT=3000
+SESSION_SECRET=cambia_este_secreto_muy_largo_y_seguro_2024
+NODE_ENV=development
+LOCATION_NAME=Buenos Aires
+LOCATION_COUNTRY=Argentina

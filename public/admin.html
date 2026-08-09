@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin — ClimaBA</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">◈</span>
+      <span>ClimaBA</span>
+      <span class="sidebar-badge">Admin</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="snav-item active" data-section="forecasts">
+        <span class="snav-icon">🌤️</span> Pronósticos
+      </button>
+      <button class="snav-item" data-section="history">
+        <span class="snav-icon">📊</span> Históricos
+      </button>
+      <button class="snav-item" data-section="users">
+        <span class="snav-icon">👤</span> Usuarios
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/" target="_blank" class="snav-external">Ver sitio →</a>
+      <button id="logoutBtn" class="snav-logout">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="admin-main">
+
+    <!-- HEADER -->
+    <header class="admin-header">
+      <div class="admin-header-left">
+        <h1 class="admin-page-title" id="pageTitle">Pronósticos</h1>
+        <p class="admin-page-sub" id="pageSub">Gestioná los pronósticos del tiempo</p>
+      </div>
+      <button class="btn-primary" id="btnCreate">+ Nuevo pronóstico</button>
+    </header>
+
+    <!-- ── SECCIÓN: PRONÓSTICOS ── -->
+    <section id="section-forecasts" class="admin-section active">
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="forecastsTable">
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Título</th><th>Condición</th>
+              <th>Temp</th><th>Imagen</th><th>Creado por</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="forecastsBody">
+            <tr><td colspan="7" class="table-loading">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── SECCIÓN: HISTÓRICOS ── -->
+    <section id="section-history" class="admin-section">
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="historyTable">
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Temp</th><th>Mín/Máx</th>
+              <th>Humedad</th><th>Viento</th><th>Precip.</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="7" class="table-loading">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── SECCIÓN: USUARIOS ── -->
+    <section id="section-users" class="admin-section">
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>Usuario</th><th>Email</th><th>Rol</th><th>Creado</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="usersBody">
+            <tr><td colspan="5" class="table-loading">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─────── MODAL: PRONÓSTICO ─────── -->
+  <div class="modal-overlay" id="forecastModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Nuevo pronóstico</h2>
+        <button class="modal-close" id="closeForecastModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="forecastForm" enctype="multipart/form-data">
+          <input type="hidden" id="fId">
+
+          <div class="form-row">
+            <div class="form-group full">
+              <label>Título *</label>
+              <input type="text" id="fTitle" placeholder="Cielo despejado con temperaturas agradables" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fecha del pronóstico *</label>
+              <input type="date" id="fDate" required>
+            </div>
+            <div class="form-group">
+              <label>Condición climática</label>
+              <select id="fCondition">
+                <option value="">Seleccionar...</option>
+                <option>Despejado</option>
+                <option>Parcialmente nublado</option>
+                <option>Nublado</option>
+                <option>Lluvioso</option>
+                <option>Tormenta</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group full">
+            <label>Descripción</label>
+            <textarea id="fDesc" rows="3" placeholder="Describe el estado del tiempo con detalle..."></textarea>
+          </div>
+
+          <!-- Métricas -->
+          <div class="form-divider">Datos meteorológicos</div>
+
+          <div class="form-row three-col">
+            <div class="form-group">
+              <label>Temperatura (°C)</label>
+              <input type="number" id="fTemp" step="0.1" placeholder="24.5">
+            </div>
+            <div class="form-group">
+              <label>Sensación (°C)</label>
+              <input type="number" id="fFeels" step="0.1" placeholder="26">
+            </div>
+            <div class="form-group">
+              <label>Mínima (°C)</label>
+              <input type="number" id="fTempMin" step="0.1" placeholder="17">
+            </div>
+          </div>
+
+          <div class="form-row three-col">
+            <div class="form-group">
+              <label>Máxima (°C)</label>
+              <input type="number" id="fTempMax" step="0.1" placeholder="28">
+            </div>
+            <div class="form-group">
+              <label>Humedad (%)</label>
+              <input type="number" id="fHumidity" min="0" max="100" placeholder="55">
+            </div>
+            <div class="form-group">
+              <label>Viento (km/h)</label>
+              <input type="number" id="fWind" step="0.1" placeholder="12">
+            </div>
+          </div>
+
+          <div class="form-row three-col">
+            <div class="form-group">
+              <label>Dir. viento</label>
+              <select id="fWindDir">
+                <option value="">—</option>
+                <option>N</option><option>NE</option><option>E</option>
+                <option>SE</option><option>S</option><option>SO</option>
+                <option>O</option><option>NO</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Precipitación (mm)</label>
+              <input type="number" id="fPrecip" step="0.1" min="0" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>Presión (hPa)</label>
+              <input type="number" id="fPressure" placeholder="1013">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Índice UV</label>
+              <input type="number" id="fUV" min="0" max="11" placeholder="7">
+            </div>
+            <div class="form-group">
+              <label>Visibilidad (km)</label>
+              <input type="number" id="fVisibility" step="0.1" placeholder="10">
+            </div>
+          </div>
+
+          <!-- Imagen -->
+          <div class="form-divider">Imagen</div>
+
+          <div class="form-group full">
+            <div class="upload-area" id="uploadArea">
+              <div class="upload-inner">
+                <span class="upload-icon">🌄</span>
+                <p>Arrastrá una imagen o hacé clic para seleccionar</p>
+                <small>JPG, PNG, WEBP — Máx. 5MB</small>
+              </div>
+              <input type="file" id="fImage" accept="image/*" style="display:none">
+            </div>
+            <div class="img-preview" id="imgPreview" style="display:none">
+              <img id="previewImg" alt="Preview">
+              <button type="button" class="remove-img" id="removeImg">✕</button>
+            </div>
+          </div>
+
+          <div class="form-group full">
+            <label>Notas adicionales</label>
+            <textarea id="fNotes" rows="2" placeholder="Recomendaciones, alertas, observaciones..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="fFeatured">
+              <span>Marcar como pronóstico destacado</span>
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancelForecast">Cancelar</button>
+        <button class="btn-primary" id="saveForecast">Guardar pronóstico</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────── MODAL: HISTÓRICO ─────── -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 id="historyModalTitle">Nuevo registro histórico</h2>
+        <button class="modal-close" id="closeHistoryModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="historyForm">
+          <input type="hidden" id="hId">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fecha *</label>
+              <input type="date" id="hDate" required>
+            </div>
+            <div class="form-group">
+              <label>Condición</label>
+              <select id="hCondition">
+                <option value="">Seleccionar...</option>
+                <option>Despejado</option><option>Parcialmente nublado</option>
+                <option>Nublado</option><option>Lluvioso</option><option>Tormenta</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row three-col">
+            <div class="form-group">
+              <label>Temperatura (°C)</label>
+              <input type="number" id="hTemp" step="0.1">
+            </div>
+            <div class="form-group">
+              <label>Mínima (°C)</label>
+              <input type="number" id="hTempMin" step="0.1">
+            </div>
+            <div class="form-group">
+              <label>Máxima (°C)</label>
+              <input type="number" id="hTempMax" step="0.1">
+            </div>
+          </div>
+          <div class="form-row three-col">
+            <div class="form-group">
+              <label>Humedad (%)</label>
+              <input type="number" id="hHumidity" min="0" max="100">
+            </div>
+            <div class="form-group">
+              <label>Viento (km/h)</label>
+              <input type="number" id="hWind" step="0.1">
+            </div>
+            <div class="form-group">
+              <label>Precip. (mm)</label>
+              <input type="number" id="hPrecip" step="0.1" min="0">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancelHistory">Cancelar</button>
+        <button class="btn-primary" id="saveHistory">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────── MODAL: USUARIO ─────── -->
+  <div class="modal-overlay" id="userModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2>Nuevo administrador</h2>
+        <button class="modal-close" id="closeUserModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="userForm">
+          <div class="form-group full">
+            <label>Usuario *</label>
+            <input type="text" id="uUsername" placeholder="nombre_usuario" required>
+          </div>
+          <div class="form-group full">
+            <label>Email *</label>
+            <input type="email" id="uEmail" placeholder="admin@ejemplo.com" required>
+          </div>
+          <div class="form-group full">
+            <label>Contraseña *</label>
+            <input type="password" id="uPassword" placeholder="Mínimo 8 caracteres" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancelUser">Cancelar</button>
+        <button class="btn-primary" id="saveUser">Crear administrador</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────── MODAL: CONFIRMAR ELIMINAR ─────── -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal modal-xs">
+      <div class="modal-header">
+        <h2>Confirmar eliminación</h2>
+        <button class="modal-close" id="closeDeleteModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="deleteMsg" style="color: rgba(200,223,245,0.7); line-height:1.6; font-size:.95rem;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancelDelete">Cancelar</button>
+        <button class="btn-danger" id="confirmDelete">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>
