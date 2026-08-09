@@ -29,11 +29,7 @@ app.use(session({
 app.use(attachUser);
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api', require('./routes/public'));
-app.use('/api/admin', require('./routes/admin'));
-app.use('/auth', require('./routes/auth'));
-
-// Ruta de setup - llamar una sola vez para inicializar las tablas
+// Setup ANTES de las rutas API
 app.get('/api/setup', async (req, res) => {
   try {
     await initializeDatabase();
@@ -42,6 +38,10 @@ app.get('/api/setup', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api', require('./routes/public'));
+app.use('/auth', require('./routes/auth'));
 
 app.get('/admin', (req, res) => {
   if (!req.session?.user) return res.redirect('/login.html');
@@ -52,7 +52,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// En local levanta el servidor, en Vercel solo exporta
 if (process.env.NODE_ENV !== 'production') {
   initializeDatabase().then(() => {
     app.listen(PORT, () => {
