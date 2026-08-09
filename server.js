@@ -1,117 +1,56 @@
-# 🌤️ ClimaBA — Sistema Web de Clima
+require('dotenv').config();
+const express = require('express');
+const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+const cors = require('cors');
+const path = require('path');
+const { initializeDatabase, pool } = require('./config/database');
+const { attachUser } = require('./middleware/auth');
 
-Web de pronóstico meteorológico con panel de administración. Los administradores cargan pronósticos, imágenes y datos históricos; los usuarios los visualizan en tiempo real.
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-## Stack
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-- **Backend:** Node.js + Express
-- **Base de datos:** PostgreSQL (Vercel Postgres en producción)
-- **Auth:** Sessions con `express-session` + `connect-pg-simple`
-- **Frontend:** HTML5 + CSS3 + JavaScript vanilla + Chart.js
+app.use(session({
+  store: new pgSession({ pool, createTableIfMissing: true }),
+  secret: process.env.SESSION_SECRET || 'super-secret-key-change-this',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 8
+  }
+}));
 
-## Estructura
+app.use(attachUser);
+app.use(express.static(path.join(__dirname, 'public')));
 
-```
-├── server.js              ← Servidor Express principal
-├── config/database.js     ← Conexión y setup de PostgreSQL
-├── middleware/            ← Auth + uploads
-├── models/weatherModel.js ← Queries a la DB
-├── routes/                ← API pública, admin y auth
-└── public/                ← Frontend estático
-    ├── index.html         ← Sitio público
-    ├── login.html         ← Login admin
-    ├── admin.html         ← Panel de administración
-    ├── css/
-    └── js/
-```
+app.use('/api', require('./routes/public'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/auth', require('./routes/auth'));
 
-## Desarrollo local
+app.get('/admin', (req, res) => {
+  if (!req.session?.user) return res.redirect('/login.html');
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
 
-### 1. Clonar e instalar
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
-```bash
-git clone https://github.com/TU_USUARIO/pagina-clima.git
-cd pagina-clima
-npm install
-```
+initializeDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log(`\n🌤️  Clima Web corriendo en http://localhost:${PORT}`);
+    console.log(`📋 Admin panel: http://localhost:${PORT}/admin`);
+    console.log(`🔑 Login: admin / admin123\n`);
+  });
+}).catch(err => {
+  console.error('Error inicializando DB:', err);
+  process.exit(1);
+});
 
-### 2. Configurar variables de entorno
-
-```bash
-cp .env.example .env
-```
-
-Editá `.env` con tu conexión PostgreSQL local:
-
-```env
-DATABASE_URL=postgresql://usuario:password@localhost:5432/clima_db
-SESSION_SECRET=secreto_largo_y_seguro
-NODE_ENV=development
-```
-
-### 3. Crear la base de datos local
-
-```bash
-createdb clima_db   # si usás psql
-```
-
-### 4. Iniciar
-
-```bash
-npm run dev   # con nodemon
-# o
-npm start
-```
-
-Accedé a **http://localhost:3000**  
-Panel admin: **http://localhost:3000/admin**  
-Credenciales por defecto: `admin` / `admin123`
-
----
-
-## Deploy en Vercel
-
-### 1. Crear base de datos
-
-En el dashboard de Vercel:  
-**Storage → Create Database → Postgres** → nombre: `clima-db`
-
-Las variables `POSTGRES_URL`, `POSTGRES_USER`, etc. se agregan automáticamente al proyecto.
-
-### 2. Agregar variables de entorno adicionales
-
-En **Settings → Environment Variables**:
-
-```
-SESSION_SECRET = (cadena larga y aleatoria)
-NODE_ENV       = production
-LOCATION_NAME  = Buenos Aires
-```
-
-### 3. Deploy
-
-```bash
-vercel --prod
-# o conectar el repo en vercel.com → Import Project
-```
-
-La base de datos se inicializa automáticamente en el primer arranque.
-
----
-
-## Credenciales por defecto
-
-| Campo | Valor |
-|-------|-------|
-| Usuario | `admin` |
-| Contraseña | `admin123` |
-
-> ⚠️ **Cambiá la contraseña** después del primer login desde el panel de usuarios.
-
-## API pública
-
-```
-GET /api/weather/current     → Pronóstico actual
-GET /api/weather/upcoming    → Próximos días (?days=5)
-GET /api/weather/history     → Últimos 30 días históricos
-```
+module.exports = app;
