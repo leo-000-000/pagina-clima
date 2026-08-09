@@ -33,6 +33,16 @@ app.use('/api', require('./routes/public'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/auth', require('./routes/auth'));
 
+// Ruta de setup - llamar una sola vez para inicializar las tablas
+app.get('/api/setup', async (req, res) => {
+  try {
+    await initializeDatabase();
+    res.json({ success: true, message: 'Base de datos inicializada correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/admin', (req, res) => {
   if (!req.session?.user) return res.redirect('/login.html');
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
@@ -42,15 +52,18 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-initializeDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log(`\n🌤️  Clima Web corriendo en http://localhost:${PORT}`);
-    console.log(`📋 Admin panel: http://localhost:${PORT}/admin`);
-    console.log(`🔑 Login: admin / admin123\n`);
+// En local levanta el servidor, en Vercel solo exporta
+if (process.env.NODE_ENV !== 'production') {
+  initializeDatabase().then(() => {
+    app.listen(PORT, () => {
+      console.log(`\n🌤️  Clima Web corriendo en http://localhost:${PORT}`);
+      console.log(`📋 Admin panel: http://localhost:${PORT}/admin`);
+      console.log(`🔑 Login: admin / admin123\n`);
+    });
+  }).catch(err => {
+    console.error('Error inicializando DB:', err);
+    process.exit(1);
   });
-}).catch(err => {
-  console.error('Error inicializando DB:', err);
-  process.exit(1);
-});
+}
 
 module.exports = app;
