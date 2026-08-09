@@ -20,16 +20,16 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 8
+    maxAge: 1000 * 60 * 60 * 8,
+    sameSite: 'lax'
   }
 }));
 
 app.use(attachUser);
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Setup ANTES de las rutas API
 app.get('/api/setup', async (req, res) => {
   try {
     await initializeDatabase();
