@@ -1,39 +1,23 @@
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 
-const UPLOAD_DIR = path.join(__dirname, '..', 'public', 'uploads');
+// En Vercel (serverless) no existe filesystem persistente.
+// Usamos memoria en todos los casos — las imágenes se guardan como base64 en la DB
+// o se puede integrar Vercel Blob en el futuro.
+// En local también usamos memoria para mantener consistencia.
 
-// Crear carpeta si no existe
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOAD_DIR);
-  },
-  filename: (req, file, cb) => {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `weather-${unique}${ext}`);
-  }
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
   const ext = path.extname(file.originalname).toLowerCase();
-  if (allowed.includes(ext)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Solo se permiten imágenes (JPG, PNG, WEBP, GIF)'), false);
-  }
+  allowed.includes(ext) ? cb(null, true) : cb(new Error('Solo imágenes JPG, PNG, WEBP, GIF'), false);
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB máx
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
 
 module.exports = { upload };
