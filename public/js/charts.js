@@ -4,9 +4,9 @@ let mainChart = null;
 let historyData = [];
 
 const CHART_COLORS = {
-  temp:     { line: '#f0a500', fill: 'rgba(240,165,0,0.08)' },
-  humidity: { line: '#5b8fbf', fill: 'rgba(91,143,191,0.08)' },
-  precip:   { line: '#c8dff5', fill: 'rgba(200,223,245,0.08)' },
+  temp:     { line: '#e67e22', fill: 'rgba(230,126,34,0.12)' },
+  humidity: { line: '#2980b9', fill: 'rgba(41,128,185,0.12)' },
+  precip:   { line: '#27ae60', fill: 'rgba(39,174,96,0.12)' },
 };
 
 const CHART_LABELS = {
@@ -77,11 +77,11 @@ function renderChart(type) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: 'rgba(11,22,35,0.92)',
-          borderColor: 'rgba(200,223,245,0.12)',
+          backgroundColor: 'rgba(255,255,255,0.95)',
+          borderColor: 'rgba(74,144,196,0.3)',
           borderWidth: 1,
-          titleColor: '#c8dff5',
-          bodyColor: '#e8f2fc',
+          titleColor: '#1a3a52',
+          bodyColor: '#1a5276',
           padding: 12,
           callbacks: {
             label: ctx => {
@@ -95,17 +95,17 @@ function renderChart(type) {
       },
       scales: {
         x: {
-          grid: { color: 'rgba(200,223,245,0.04)' },
+          grid: { color: 'rgba(74,144,196,0.1)' },
           ticks: {
-            color: 'rgba(200,223,245,0.45)',
+            color: 'rgba(30,80,120,0.6)',
             font: { size: 11, family: 'DM Sans' },
             maxTicksLimit: 10,
           }
         },
         y: {
-          grid: { color: 'rgba(200,223,245,0.06)' },
+          grid: { color: 'rgba(74,144,196,0.1)' },
           ticks: {
-            color: 'rgba(200,223,245,0.45)',
+            color: 'rgba(30,80,120,0.6)',
             font: { size: 11, family: 'DM Sans' },
             callback: (val) => {
               const units = { temp: '°C', humidity: '%', precip: 'mm' };
