@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Acceso Admin — ClimaBA</title>
+  <title>Acceso Admin — Climatizate VC</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
   <style>
     :root {
-      --sky-deep: #0b1623; --sky-mid: #152238; --sky-accent: #1e3a5f;
-      --ice: #c8dff5; --frost: #e8f2fc; --sun: #f0a500;
-      --text-dim: rgba(200,223,245,0.55);
+      --sky-deep: #e8f4fd; --sky-mid: #d0e8f7; --sky-accent: #4a90c4;
+      --ice: #1a5276; --frost: #1a3a52; --sun: #e67e22;
+      --text-dim: rgba(30,80,120,0.6);
       --font-body: 'DM Sans', sans-serif;
       --font-display: 'DM Serif Display', serif;
     }
@@ -34,10 +34,12 @@
     }
     .logo-icon { color: var(--sun); font-size: 1.5rem; }
     .login-card {
-      background: rgba(200,223,245,0.04);
-      border: 1px solid rgba(200,223,245,0.10);
+      background: rgba(255,255,255,0.8);
+      border: 1px solid rgba(74,144,196,0.2);
       border-radius: 24px;
       padding: 44px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 40px rgba(74,144,196,0.12);
     }
     .login-card h1 {
       font-family: var(--font-display);
@@ -56,15 +58,15 @@
     }
     .field input {
       width: 100%; padding: 14px 18px;
-      background: rgba(200,223,245,0.06);
-      border: 1px solid rgba(200,223,245,0.12);
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(74,144,196,0.25);
       border-radius: 12px;
       color: var(--frost); font-family: var(--font-body); font-size: 0.95rem;
       outline: none; transition: border-color 0.2s, background 0.2s;
     }
     .field input:focus {
-      border-color: rgba(200,223,245,0.35);
-      background: rgba(200,223,245,0.09);
+      border-color: rgba(74,144,196,0.6);
+      background: #ffffff;
     }
     .field input::placeholder { color: var(--text-dim); }
     .btn-login {
@@ -97,9 +99,9 @@
 <body>
   <div class="login-wrap">
     <div class="login-logo">
-      <a href="/">
-        <span class="logo-icon">◈</span>
-        <span>ClimaBA</span>
+      <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--frost);">
+        <img src="/img/logo-carbonell.jpg" alt="Logo" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid rgba(74,144,196,0.3);">
+        <span>Climatizate VC</span>
       </a>
     </div>
     <div class="login-card">
