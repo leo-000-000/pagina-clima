@@ -1,4 +1,4 @@
-/* ─── GRÁFICOS HISTÓRICOS ────────────────────────────────────────────────── */
+
 
 let mainChart = null;
 let historyData = [];
@@ -118,7 +118,7 @@ function renderChart(type) {
   });
 }
 
-/* ─── TABS ───────────────────────────────────────────────────────────────── */
+
 document.querySelectorAll('.chart-tab').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active'));
