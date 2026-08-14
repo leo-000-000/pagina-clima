@@ -1,161 +1,168 @@
-const { Pool } = require('pg');
-const bcrypt = require('bcryptjs');
-
-// Vercel Postgres usa POSTGRES_URL, desarrollo local usa DATABASE_URL
-const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
-
-const pool = new Pool({
-  connectionString,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
-
-// Helper query
-const query = (text, params) => pool.query(text, params);
-
-async function initializeDatabase() {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-
-    // Tabla usuarios
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        role TEXT DEFAULT 'admin',
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-
-    // Tabla pronósticos
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS weather_forecasts (
-        id SERIAL PRIMARY KEY,
-        title TEXT NOT NULL,
-        description TEXT,
-        forecast_date DATE NOT NULL,
-        location TEXT NOT NULL DEFAULT 'Buenos Aires',
-        temperature REAL,
-        feels_like REAL,
-        temp_min REAL,
-        temp_max REAL,
-        humidity INTEGER,
-        wind_speed REAL,
-        wind_direction TEXT,
-        precipitation REAL,
-        pressure REAL,
-        uv_index INTEGER,
-        visibility REAL,
-        weather_condition TEXT,
-        image_url TEXT,
-        additional_notes TEXT,
-        is_featured INTEGER DEFAULT 0,
-        created_by INTEGER REFERENCES users(id),
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-
-    // Tabla históricos
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS weather_history (
-        id SERIAL PRIMARY KEY,
-        record_date DATE NOT NULL UNIQUE,
-        temperature REAL,
-        temp_min REAL,
-        temp_max REAL,
-        humidity INTEGER,
-        wind_speed REAL,
-        precipitation REAL,
-        weather_condition TEXT,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-
-    // Admin por defecto
-    const adminPass = await bcrypt.hash('admin123', 10);
-    await client.query(`
-      INSERT INTO users (username, email, password, role)
-      VALUES ('admin', 'admin@clima.com', $1, 'superadmin')
-      ON CONFLICT (username) DO NOTHING
-    `, [adminPass]);
-
-    // Datos históricos de ejemplo (últimos 30 días)
-    const conditions = ['Despejado', 'Parcialmente nublado', 'Nublado', 'Lluvioso', 'Tormenta'];
-    for (let i = 30; i >= 1; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const temp = (18 + Math.random() * 14).toFixed(1);
-      const min  = (parseFloat(temp) - 4 - Math.random() * 3).toFixed(1);
-      const max  = (parseFloat(temp) + 3 + Math.random() * 3).toFixed(1);
-      const hum  = Math.floor(40 + Math.random() * 50);
-      const wind = (5 + Math.random() * 25).toFixed(1);
-      const prec = (Math.random() > 0.7 ? Math.random() * 15 : 0).toFixed(1);
-      const cond = conditions[Math.floor(Math.random() * conditions.length)];
-      await client.query(`
-        INSERT INTO weather_history (record_date, temperature, temp_min, temp_max, humidity, wind_speed, precipitation, weather_condition)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (record_date) DO NOTHING
-      `, [dateStr, temp, min, max, hum, wind, prec, cond]);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso Admin — Climatizate VC</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --sky-deep: #e8f4fd; --sky-mid: #d0e8f7; --sky-accent: #4a90c4;
+      --ice: #1a5276; --frost: #1a3a52; --sun: #e67e22;
+      --text-dim: rgba(30,80,120,0.6);
+      --font-body: 'DM Sans', sans-serif;
+      --font-display: 'DM Serif Display', serif;
     }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background: var(--sky-deep);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .login-wrap {
+      width: 100%; max-width: 420px;
+      padding: 24px;
+    }
+    .login-logo {
+      text-align: center; margin-bottom: 48px;
+    }
+    .login-logo a {
+      color: var(--frost); text-decoration: none;
+      font-size: 1.3rem; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .logo-icon { color: var(--sun); font-size: 1.5rem; }
+    .login-card {
+      background: rgba(255,255,255,0.8);
+      border: 1px solid rgba(74,144,196,0.2);
+      border-radius: 24px;
+      padding: 44px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 40px rgba(74,144,196,0.12);
+    }
+    .login-card h1 {
+      font-family: var(--font-display);
+      font-size: 1.9rem; font-weight: 400;
+      color: var(--frost); margin-bottom: 8px;
+    }
+    .login-card p {
+      font-size: 0.85rem; color: var(--text-dim);
+      margin-bottom: 36px;
+    }
+    .field { margin-bottom: 20px; }
+    .field label {
+      display: block; font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--ice); margin-bottom: 8px;
+    }
+    .field input {
+      width: 100%; padding: 14px 18px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(74,144,196,0.25);
+      border-radius: 12px;
+      color: var(--frost); font-family: var(--font-body); font-size: 0.95rem;
+      outline: none; transition: border-color 0.2s, background 0.2s;
+    }
+    .field input:focus {
+      border-color: rgba(74,144,196,0.6);
+      background: #ffffff;
+    }
+    .field input::placeholder { color: var(--text-dim); }
+    .btn-login {
+      width: 100%; padding: 15px;
+      background: var(--sky-accent);
+      border: 1px solid rgba(200,223,245,0.18);
+      border-radius: 12px;
+      color: var(--frost); font-family: var(--font-body);
+      font-size: 0.95rem; font-weight: 500;
+      cursor: pointer; margin-top: 8px;
+      transition: background 0.25s, transform 0.2s;
+    }
+    .btn-login:hover { background: #255a8f; transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error-msg {
+      display: none; margin-top: 16px;
+      padding: 12px 16px; border-radius: 10px;
+      background: rgba(220,50,50,0.1); border: 1px solid rgba(220,50,50,0.2);
+      color: #f87171; font-size: 0.85rem; text-align: center;
+    }
+    .back-link {
+      display: block; text-align: center; margin-top: 28px;
+      font-size: 0.82rem; color: var(--text-dim);
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--frost); }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-logo">
+      <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--frost);">
+        <img src="/img/logo-carbonell.jpg" alt="Logo" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid rgba(74,144,196,0.3);">
+        <span>Climatizate VC</span>
+      </a>
+    </div>
+    <div class="login-card">
+      <h1>Acceso admin</h1>
+      <p>Ingresá tus credenciales para gestionar el contenido</p>
+      <div class="field">
+        <label for="username">Usuario</label>
+        <input type="text" id="username" placeholder="tu usuario" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-login" id="loginBtn">Ingresar al panel</button>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+    <a href="/" class="back-link">← Volver al sitio público</a>
+  </div>
 
-    // Pronósticos de ejemplo
-    const forecasts = [
-      {
-        title: 'Cielo despejado y temperaturas cálidas',
-        description: 'Una jornada ideal para actividades al aire libre. El sol predominará durante todo el día con escasa nubosidad.',
-        date: new Date().toISOString().split('T')[0],
-        temp: 24.5, feels: 26, min: 17, max: 28, hum: 55,
-        wind: 12, dir: 'NE', precip: 0, pres: 1013, uv: 7, vis: 10,
-        cond: 'Despejado', feat: 1,
-        notes: 'Se recomienda protector solar para actividades prolongadas al exterior.'
-      },
-      {
-        title: 'Nublado con posibilidad de lluvias vespertinas',
-        description: 'La mañana comenzará con cielos parcialmente cubiertos. Para la tarde se esperan chaparrones dispersos.',
-        date: (() => { const d = new Date(); d.setDate(d.getDate()+1); return d.toISOString().split('T')[0]; })(),
-        temp: 19, feels: 18, min: 14, max: 22, hum: 75,
-        wind: 20, dir: 'SO', precip: 8.5, pres: 1005, uv: 3, vis: 7,
-        cond: 'Lluvioso', feat: 0,
-        notes: 'Llevar paraguas. Las lluvias serán más intensas entre las 16 y las 20 hs.'
-      },
-      {
-        title: 'Frente frío ingresa desde el sur',
-        description: 'Un frente frío traerá una baja significativa de temperatura. Los vientos serán intensos por la noche.',
-        date: (() => { const d = new Date(); d.setDate(d.getDate()+2); return d.toISOString().split('T')[0]; })(),
-        temp: 13, feels: 9, min: 9, max: 16, hum: 80,
-        wind: 35, dir: 'S', precip: 3, pres: 998, uv: 2, vis: 5,
-        cond: 'Tormenta', feat: 0,
-        notes: 'Precaución con las ráfagas de viento. Se esperan descensos de hasta 10°C.'
+  <script>
+    // Si ya tiene sesión, redirigir directo
+    fetch('/auth/check').then(r => r.json()).then(({ authenticated }) => {
+      if (authenticated) window.location.href = '/admin';
+    });
+
+    const btn = document.getElementById('loginBtn');
+    const errMsg = document.getElementById('errorMsg');
+
+    async function doLogin() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      if (!username || !password) {
+        showError('Completá usuario y contraseña'); return;
       }
-    ];
-
-    for (const f of forecasts) {
-      await client.query(`
-        INSERT INTO weather_forecasts
-        (title, description, forecast_date, location, temperature, feels_like, temp_min, temp_max,
-         humidity, wind_speed, wind_direction, precipitation, pressure, uv_index, visibility,
-         weather_condition, is_featured, additional_notes, created_by)
-        VALUES ($1,$2,$3,'Buenos Aires',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,1)
-        ON CONFLICT DO NOTHING
-      `, [f.title, f.description, f.date, f.temp, f.feels, f.min, f.max,
-          f.hum, f.wind, f.dir, f.precip, f.pres, f.uv, f.vis, f.cond, f.feat, f.notes]);
+      btn.disabled = true; btn.textContent = 'Ingresando...';
+      errMsg.style.display = 'none';
+      try {
+        const res = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          window.location.href = '/admin';
+        } else {
+          showError(data.error || 'Credenciales inválidas');
+          btn.disabled = false; btn.textContent = 'Ingresar al panel';
+        }
+      } catch {
+        showError('Error de conexión. Intentá de nuevo.');
+        btn.disabled = false; btn.textContent = 'Ingresar al panel';
+      }
     }
 
-    await client.query('COMMIT');
-    console.log('✅ Base de datos inicializada correctamente');
-  } catch (err) {
-    await client.query('ROLLBACK');
-    // Si las tablas ya existen no es error crítico
-    if (err.code !== '42P07') {
-      console.error('Error inicializando DB:', err.message);
-      throw err;
+    function showError(msg) {
+      errMsg.textContent = msg; errMsg.style.display = 'block';
     }
-  } finally {
-    client.release();
-  }
-}
 
-module.exports = { pool, query, initializeDatabase };
+    btn.addEventListener('click', doLogin);
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  </script>
+</body>
+</html>
